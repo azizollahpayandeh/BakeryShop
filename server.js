@@ -1,102 +1,95 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
-const session = require('express-session');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Middleware
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [
+        'https://bakery-shop-*.vercel.app',
+        'https://*.vercel.app',
+        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
+      ].filter(Boolean)
+    : ['http://localhost:3001', 'http://localhost:3000'];
+
 app.use(cors({
-    origin: 'http://localhost:3001',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
+        
+        // Check if origin is allowed
+        const isAllowed = allowedOrigins.some(allowedOrigin => {
+            if (allowedOrigin.includes('*')) {
+                const pattern = allowedOrigin.replace(/\*/g, '.*');
+                return new RegExp(`^${pattern}$`).test(origin);
+            }
+            return origin === allowedOrigin;
+        });
+        
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('.'));
 
-// Session configuration
-app.use(session({
-    secret: 'artisan-bakery-secret-key-2024',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: false, // Set to true in production with HTTPS
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+// In-memory storage for serverless (replace with proper database in production)
+let users = [];
+let orders = [];
+let nextUserId = 1;
+let nextOrderId = 1;
+
+// Simple authentication middleware using JWT-like tokens
+function generateToken(userId) {
+    return Buffer.from(JSON.stringify({ userId, timestamp: Date.now() })).toString('base64');
+}
+
+function verifyToken(token) {
+    try {
+        const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
+        // Check if token is not older than 24 hours
+        if (Date.now() - decoded.timestamp > 24 * 60 * 60 * 1000) {
+            return null;
+        }
+        return decoded.userId;
+    } catch (error) {
+        return null;
     }
-}));
-
-// Database setup
-const db = new sqlite3.Database('./bakery.db', (err) => {
-    if (err) {
-        console.error('Error opening database:', err.message);
-    } else {
-        console.log('Connected to SQLite database');
-        initializeDatabase();
-    }
-});
-
-// Initialize database tables
-function initializeDatabase() {
-    // Users table
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        firstName TEXT NOT NULL,
-        lastName TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        phone TEXT NOT NULL,
-        birthDate TEXT,
-        password TEXT NOT NULL,
-        street TEXT NOT NULL,
-        houseNumber TEXT NOT NULL,
-        apartment TEXT,
-        postalCode TEXT NOT NULL,
-        city TEXT NOT NULL,
-        state TEXT NOT NULL,
-        country TEXT DEFAULT 'Germany',
-        newsletter INTEGER DEFAULT 0,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
-
-    // Orders table
-    db.run(`CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId INTEGER NOT NULL,
-        items TEXT NOT NULL,
-        totalAmount REAL NOT NULL,
-        firstName TEXT NOT NULL,
-        lastName TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        street TEXT NOT NULL,
-        houseNumber TEXT NOT NULL,
-        apartment TEXT,
-        postalCode TEXT NOT NULL,
-        city TEXT NOT NULL,
-        state TEXT NOT NULL,
-        deliveryDate TEXT NOT NULL,
-        deliveryTime TEXT NOT NULL,
-        specialInstructions TEXT,
-        paymentMethod TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (userId) REFERENCES users (id)
-    )`);
-
-    console.log('Database tables initialized');
 }
 
 // Authentication middleware
 function requireAuth(req, res, next) {
-    if (req.session.userId) {
-        next();
-    } else {
-        res.status(401).json({ error: 'Authentication required' });
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+        const userId = verifyToken(token);
+        if (userId) {
+            req.userId = userId;
+            return next();
+        }
+    }
+    res.status(401).json({ error: 'Authentication required' });
+}
+
+// Initialize sample data (for development)
+function initializeData() {
+    // Add some sample users for testing
+    if (users.length === 0) {
+        console.log('Initializing sample data...');
     }
 }
+
 
 // Routes
 
@@ -123,52 +116,53 @@ app.post('/api/register', async (req, res) => {
         }
 
         // Check if user already exists
-        db.get('SELECT id FROM users WHERE email = ?', [email], async (err, row) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database error' });
-            }
+        const existingUser = users.find(user => user.email === email);
+        if (existingUser) {
+            return res.status(400).json({ error: 'User already exists with this email' });
+        }
 
-            if (row) {
-                return res.status(400).json({ error: 'User already exists with this email' });
-            }
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Hash password
-            const hashedPassword = await bcrypt.hash(password, 10);
+        // Create user
+        const newUser = {
+            id: nextUserId++,
+            firstName,
+            lastName,
+            email,
+            phone,
+            birthDate,
+            password: hashedPassword,
+            street,
+            houseNumber,
+            apartment,
+            postalCode,
+            city,
+            state,
+            country: 'Germany',
+            newsletter: newsletter ? 1 : 0,
+            createdAt: new Date().toISOString()
+        };
 
-            // Insert user
-            db.run(
-                `INSERT INTO users (firstName, lastName, email, phone, birthDate, password, 
-                 street, houseNumber, apartment, postalCode, city, state, newsletter) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [firstName, lastName, email, phone, birthDate, hashedPassword,
-                 street, houseNumber, apartment, postalCode, city, state, newsletter ? 1 : 0],
-                function(err) {
-                    if (err) {
-                        return res.status(500).json({ error: 'Failed to create user' });
-                    }
+        users.push(newUser);
 
-                    res.json({ 
-                        success: true, 
-                        message: 'User registered successfully',
-                        userId: this.lastID 
-                    });
-                }
-            );
+        res.json({ 
+            success: true, 
+            message: 'User registered successfully',
+            userId: newUser.id 
         });
     } catch (error) {
+        console.error('Registration error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
 // User login
-app.post('/api/login', (req, res) => {
-    const { email, password } = req.body;
+app.post('/api/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-
+        const user = users.find(u => u.email === email);
         if (!user) {
             return res.status(400).json({ error: 'Invalid email or password' });
         }
@@ -178,13 +172,13 @@ app.post('/api/login', (req, res) => {
             return res.status(400).json({ error: 'Invalid email or password' });
         }
 
-        // Set session
-        req.session.userId = user.id;
-        req.session.userEmail = user.email;
+        // Generate token
+        const token = generateToken(user.id);
 
         res.json({ 
             success: true, 
             message: 'Login successful',
+            token,
             user: {
                 id: user.id,
                 firstName: user.firstName,
@@ -202,26 +196,21 @@ app.post('/api/login', (req, res) => {
                 newsletter: user.newsletter
             }
         });
-    });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 // User logout
 app.post('/api/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            return res.status(500).json({ error: 'Could not log out' });
-        }
-        res.json({ success: true, message: 'Logged out successfully' });
-    });
+    res.json({ success: true, message: 'Logged out successfully' });
 });
 
 // Get current user
 app.get('/api/user', requireAuth, (req, res) => {
-    db.get('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, user) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-
+    try {
+        const user = users.find(u => u.id === req.userId);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -242,73 +231,93 @@ app.get('/api/user', requireAuth, (req, res) => {
             country: user.country,
             newsletter: user.newsletter
         });
-    });
+    } catch (error) {
+        console.error('Get user error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 // Check authentication status
 app.get('/api/auth/status', (req, res) => {
-    if (req.session.userId) {
-        res.json({ authenticated: true, userId: req.session.userId });
-    } else {
-        res.json({ authenticated: false });
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+        const userId = verifyToken(token);
+        if (userId) {
+            return res.json({ authenticated: true, userId });
+        }
     }
+    res.json({ authenticated: false });
 });
 
 // Create order
 app.post('/api/orders', requireAuth, (req, res) => {
-    const {
-        items, totalAmount, firstName, lastName, email, phone,
-        street, houseNumber, apartment, postalCode, city, state,
-        deliveryDate, deliveryTime, specialInstructions, paymentMethod
-    } = req.body;
+    try {
+        const {
+            items, totalAmount, firstName, lastName, email, phone,
+            street, houseNumber, apartment, postalCode, city, state,
+            deliveryDate, deliveryTime, specialInstructions, paymentMethod
+        } = req.body;
 
-    const itemsJson = JSON.stringify(items);
+        const newOrder = {
+            id: nextOrderId++,
+            userId: req.userId,
+            items: JSON.stringify(items),
+            totalAmount,
+            firstName,
+            lastName,
+            email,
+            phone,
+            street,
+            houseNumber,
+            apartment,
+            postalCode,
+            city,
+            state,
+            deliveryDate,
+            deliveryTime,
+            specialInstructions,
+            paymentMethod,
+            status: 'pending',
+            createdAt: new Date().toISOString()
+        };
 
-    db.run(
-        `INSERT INTO orders (userId, items, totalAmount, firstName, lastName, email, phone,
-         street, houseNumber, apartment, postalCode, city, state, 
-         deliveryDate, deliveryTime, specialInstructions, paymentMethod) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.session.userId, itemsJson, totalAmount, firstName, lastName, email, phone,
-         street, houseNumber, apartment, postalCode, city, state,
-         deliveryDate, deliveryTime, specialInstructions, paymentMethod],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to create order' });
-            }
+        orders.push(newOrder);
 
-            res.json({ 
-                success: true, 
-                message: 'Order created successfully',
-                orderId: this.lastID 
-            });
-        }
-    );
+        res.json({ 
+            success: true, 
+            message: 'Order created successfully',
+            orderId: newOrder.id 
+        });
+    } catch (error) {
+        console.error('Create order error:', error);
+        res.status(500).json({ error: 'Failed to create order' });
+    }
 });
 
 // Get user orders
 app.get('/api/orders', requireAuth, (req, res) => {
-    db.all('SELECT * FROM orders WHERE userId = ? ORDER BY createdAt DESC', [req.session.userId], (err, orders) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
+    try {
+        const userOrders = orders
+            .filter(order => order.userId === req.userId)
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        res.json(orders);
+        res.json(userOrders);
+    } catch (error) {
+        console.error('Get orders error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Initialize data
+initializeData();
+
+// Export for Vercel
+module.exports = app;
+
+// Start server (only in development)
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3001;
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
     });
-});
-
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-    db.close((err) => {
-        if (err) {
-            console.error(err.message);
-        }
-        console.log('Database connection closed');
-        process.exit(0);
-    });
-});
+}
