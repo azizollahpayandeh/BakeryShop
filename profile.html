@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Artisan Bakery</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-bread-slice"></i>
+                <span>Artisan Bakery</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="auth.html" class="nav-link" id="authLink">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a href="profile.html" class="nav-link active" id="profileLink" style="display: none;">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a href="about.html" class="nav-link">About Us</a>
+                </li>
+                <li class="nav-item">
+                    <a href="products.html" class="nav-link">Products</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" id="logoutBtn" style="display: none;" onclick="logout()">Logout</a>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Page -->
+    <section class="profile-page">
+        <div class="container">
+            <h2>My Profile</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 3rem;">Manage your account information and view your orders</p>
+            
+            <div class="profile-container">
+                <!-- Profile Information -->
+                <div class="profile-section">
+                    <h3><i class="fas fa-user"></i> Personal Information</h3>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <label>Name:</label>
+                            <span id="userName">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Email:</label>
+                            <span id="userEmail">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Phone:</label>
+                            <span id="userPhone">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Birth Date:</label>
+                            <span id="userBirthDate">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                <div class="profile-section">
+                    <h3><i class="fas fa-map-marker-alt"></i> Address Information</h3>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <label>Address:</label>
+                            <span id="userAddress">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <label>City:</label>
+                            <span id="userCity">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <label>State:</label>
+                            <span id="userState">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Postal Code:</label>
+                            <span id="userPostalCode">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order History -->
+                <div class="profile-section">
+                    <h3><i class="fas fa-shopping-bag"></i> Order History</h3>
+                    <div id="orderHistory">
+                        <div class="loading">Loading your orders...</div>
+                    </div>
+                </div>
+
+                <!-- Account Actions -->
+                <div class="profile-section">
+                    <h3><i class="fas fa-cog"></i> Account Actions</h3>
+                    <div class="account-actions">
+                        <button class="btn btn-secondary" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Artisan Bakery</h3>
+                    <p>Bringing you the finest artisan breads with traditional recipes and modern convenience.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="login.html">Login</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <p><i class="fas fa-phone"></i> +49 123 456 7890</p>
+                    <p><i class="fas fa-envelope"></i> info@artisanbakery.de</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Berlin, Germany</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Artisan Bakery. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Profile page specific JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            loadUserProfile();
+            loadOrderHistory();
+        });
+
+        function checkAuthStatus() {
+            fetch('/api/auth/status', {
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated) {
+                        // User is logged in
+                        document.getElementById('authLink').style.display = 'none';
+                        document.getElementById('profileLink').style.display = 'block';
+                    } else {
+                        // User is not logged in, redirect to login
+                        window.location.href = 'auth.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking auth status:', error);
+                    window.location.href = 'auth.html';
+                });
+        }
+
+        function loadUserProfile() {
+            fetch('/api/user', {
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(user => {
+                    document.getElementById('userName').textContent = `${user.firstName} ${user.lastName}`;
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('userPhone').textContent = user.phone || 'Not provided';
+                    document.getElementById('userBirthDate').textContent = user.birthDate || 'Not provided';
+                    
+                    const address = `${user.street} ${user.houseNumber}`;
+                    const fullAddress = user.apartment ? `${address}, ${user.apartment}` : address;
+                    document.getElementById('userAddress').textContent = fullAddress;
+                    document.getElementById('userCity').textContent = user.city;
+                    document.getElementById('userState').textContent = user.state;
+                    document.getElementById('userPostalCode').textContent = user.postalCode;
+                })
+                .catch(error => {
+                    console.error('Error loading user profile:', error);
+                    showNotification('Error loading profile information');
+                });
+        }
+
+        function loadOrderHistory() {
+            // Load orders from localStorage
+            const orders = JSON.parse(localStorage.getItem('userOrders')) || [];
+            const orderHistoryDiv = document.getElementById('orderHistory');
+            
+            if (orders.length === 0) {
+                orderHistoryDiv.innerHTML = '<div class="no-orders">No orders yet. <a href="products.html">Start shopping!</a></div>';
+                return;
+            }
+
+            let ordersHtml = '';
+            orders.forEach(order => {
+                const orderDate = new Date(order.createdAt).toLocaleDateString();
+                
+                ordersHtml += `
+                    <div class="order-item">
+                        <div class="order-header">
+                            <h4>Order #${order.id}</h4>
+                            <span class="order-date">${orderDate}</span>
+                            <span class="order-status ${order.status}">${order.status}</span>
+                        </div>
+                        <div class="order-details">
+                            <div class="order-items">
+                                <div class="item">
+                                    <span>${order.product.name} x${order.quantity}</span>
+                                    <span>€${order.totalAmount.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div class="order-total">
+                                <strong>Total: €${order.totalAmount.toFixed(2)}</strong>
+                            </div>
+                            <div class="order-info">
+                                <p><strong>Delivery:</strong> ${order.deliveryDate} - ${order.deliveryTime}</p>
+                                <p><strong>Payment:</strong> ${order.paymentMethod}</p>
+                                ${order.specialInstructions ? `<p><strong>Instructions:</strong> ${order.specialInstructions}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            orderHistoryDiv.innerHTML = ordersHtml;
+        }
+
+        function logout() {
+            fetch('/api/logout', {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Logged out successfully');
+                    window.location.href = 'index.html';
+                }
+            })
+            .catch(error => {
+                console.error('Error logging out:', error);
+                showNotification('Error logging out');
+            });
+        }
+    </script>
+</body>
+</html>

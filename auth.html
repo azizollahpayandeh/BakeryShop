@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Register - Artisan Bakery</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-bread-slice"></i>
+                <span>Artisan Bakery</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="auth.html" class="nav-link active" id="authLink">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a href="profile.html" class="nav-link" id="profileLink" style="display: none;">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a href="about.html" class="nav-link">About Us</a>
+                </li>
+                <li class="nav-item">
+                    <a href="products.html" class="nav-link">Products</a>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Auth Container -->
+    <div class="auth-container">
+        <div class="auth-tabs">
+            <button class="tab-btn active" onclick="showTab('login')">Login</button>
+            <button class="tab-btn" onclick="showTab('register')">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginTab" class="auth-form active">
+            <h2>Welcome Back</h2>
+            <p style="text-align: center; margin-bottom: 2rem; color: #666;">Sign in to your account to continue shopping</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="remember"> Remember me
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">Sign In</button>
+                
+                <div style="text-align: center;">
+                    <p><a href="#" style="color: #8B4513; text-decoration: none;">Forgot your password?</a></p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerTab" class="auth-form">
+            <h2>Create Account</h2>
+            <p style="text-align: center; margin-bottom: 2rem; color: #666;">Join us and enjoy fresh artisan bread delivered to your door</p>
+            
+            <form id="registerForm">
+                <!-- Personal Information -->
+                <h3 style="color: #8B4513; margin-bottom: 1rem; border-bottom: 2px solid #8B4513; padding-bottom: 0.5rem;">Personal Information</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" placeholder="+49 123 456 7890" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="birthDate">Date of Birth</label>
+                        <input type="date" id="birthDate" name="birthDate">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password *</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                </div>
+                
+                <!-- German Address Information -->
+                <h3 style="color: #8B4513; margin: 2rem 0 1rem; border-bottom: 2px solid #8B4513; padding-bottom: 0.5rem;">Address Information</h3>
+                
+                <div class="form-group">
+                    <label for="street">Street Name *</label>
+                    <input type="text" id="street" name="street" placeholder="e.g., Hauptstraße" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="houseNumber">House Number *</label>
+                        <input type="text" id="houseNumber" name="houseNumber" placeholder="e.g., 123" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="apartment">Apartment/Unit (optional)</label>
+                        <input type="text" id="apartment" name="apartment" placeholder="e.g., 2A">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="postalCode">Postal Code (PLZ) *</label>
+                        <input type="text" id="postalCode" name="postalCode" placeholder="e.g., 10115" pattern="[0-9]{5}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="city">City *</label>
+                        <input type="text" id="city" name="city" placeholder="e.g., Berlin" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="state">State (Bundesland) *</label>
+                    <select id="state" name="state" required>
+                        <option value="">Select State</option>
+                        <option value="Baden-Württemberg">Baden-Württemberg</option>
+                        <option value="Bayern">Bayern</option>
+                        <option value="Berlin">Berlin</option>
+                        <option value="Brandenburg">Brandenburg</option>
+                        <option value="Bremen">Bremen</option>
+                        <option value="Hamburg">Hamburg</option>
+                        <option value="Hessen">Hessen</option>
+                        <option value="Mecklenburg-Vorpommern">Mecklenburg-Vorpommern</option>
+                        <option value="Niedersachsen">Niedersachsen</option>
+                        <option value="Nordrhein-Westfalen">Nordrhein-Westfalen</option>
+                        <option value="Rheinland-Pfalz">Rheinland-Pfalz</option>
+                        <option value="Saarland">Saarland</option>
+                        <option value="Sachsen">Sachsen</option>
+                        <option value="Sachsen-Anhalt">Sachsen-Anhalt</option>
+                        <option value="Schleswig-Holstein">Schleswig-Holstein</option>
+                        <option value="Thüringen">Thüringen</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="country">Country *</label>
+                    <input type="text" id="country" name="country" value="Germany" readonly>
+                </div>
+                
+                <!-- Additional Information -->
+                <h3 style="color: #8B4513; margin: 2rem 0 1rem; border-bottom: 2px solid #8B4513; padding-bottom: 0.5rem;">Additional Information</h3>
+                
+                <div class="form-group">
+                    <label for="newsletter">
+                        <input type="checkbox" id="newsletter" name="newsletter"> Subscribe to our newsletter for special offers and new products
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label for="terms">
+                        <input type="checkbox" id="terms" name="terms" required> I agree to the <a href="#" style="color: #8B4513;">Terms and Conditions</a> and <a href="#" style="color: #8B4513;">Privacy Policy</a> *
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Artisan Bakery</h3>
+                    <p>Bringing you the finest artisan breads with traditional recipes and modern convenience.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="auth.html">Login</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <p><i class="fas fa-phone"></i> +49 123 456 7890</p>
+                    <p><i class="fas fa-envelope"></i> info@artisanbakery.de</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Berlin, Germany</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Artisan Bakery. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.auth-form').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
