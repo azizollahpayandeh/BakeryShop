@@ -63,9 +63,19 @@ Set these in your Vercel dashboard:
 ## Testing the Deployment
 
 1. Visit your Vercel URL
-2. Try registering a new user
-3. Test login functionality
-4. Create a test order
+2. Check that CSS styles are loading properly
+3. Try registering a new user
+4. Test login functionality
+5. Create a test order
+6. Navigate between different pages
+
+## Static Files Fix
+
+The CSS and JavaScript files should now load properly because:
+- Added specific routes for static files in `server.js`
+- Updated `vercel.json` to handle static file routing
+- Added proper Content-Type headers for CSS, JS, and image files
+- Added cache headers for better performance
 
 ## Troubleshooting
 
