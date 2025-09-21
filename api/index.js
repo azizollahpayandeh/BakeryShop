@@ -16,17 +16,6 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static('.', {
-    setHeaders: (res, path) => {
-        if (path.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css');
-        } else if (path.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-        }
-    }
-}));
-
 // In-memory storage for serverless (replace with proper database in production)
 let users = [];
 let orders = [];
@@ -48,37 +37,6 @@ function verifyToken(token) {
     }
 }
 
-// Authentication middleware
-function requireAuth(req, res, next) {
-    const token = req.headers.authorization?.replace('Bearer ', '') || 
-                  req.body.token || 
-                  req.query.token;
-    
-    console.log('Auth token received:', token ? 'Yes' : 'No');
-    
-    if (token) {
-        const userId = verifyToken(token);
-        console.log('Token verified, userId:', userId);
-        if (userId) {
-            req.userId = userId;
-            return next();
-        }
-    }
-    console.log('Authentication failed');
-    res.status(401).json({ error: 'Authentication required' });
-}
-
-// Initialize sample data (for development)
-function initializeData() {
-    // Add some sample users for testing
-    if (users.length === 0) {
-        console.log('Initializing sample data...');
-    }
-}
-
-
-// Routes
-
 // Health check endpoint for Vercel
 app.get('/api/health', (req, res) => {
     res.json({ 
@@ -88,91 +46,6 @@ app.get('/api/health', (req, res) => {
         users: users.length,
         orders: orders.length
     });
-});
-
-// Serve HTML files
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'auth.html'));
-});
-
-app.get('/auth.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'auth.html'));
-});
-
-app.get('/products.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'products.html'));
-});
-
-app.get('/admin.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-// Serve CSS and JS files with proper headers
-app.get('/styles.css', (req, res) => {
-    res.setHeader('Content-Type', 'text/css');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, 'styles.css'));
-});
-
-app.get('/script.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, 'script.js'));
-});
-
-app.get('/languages.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, 'languages.js'));
-});
-
-// Handle all static files
-app.get('*.css', (req, res) => {
-    res.setHeader('Content-Type', 'text/css');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, req.path));
-});
-
-app.get('*.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, req.path));
-});
-
-app.get('*.png', (req, res) => {
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, req.path));
-});
-
-app.get('*.jpg', (req, res) => {
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, req.path));
-});
-
-app.get('*.jpeg', (req, res) => {
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, req.path));
-});
-
-app.get('*.gif', (req, res) => {
-    res.setHeader('Content-Type', 'image/gif');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, req.path));
-});
-
-app.get('*.svg', (req, res) => {
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, req.path));
-});
-
-app.get('*.ico', (req, res) => {
-    res.setHeader('Content-Type', 'image/x-icon');
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.sendFile(path.join(__dirname, req.path));
 });
 
 // User registration
@@ -240,54 +113,6 @@ app.post('/api/register', async (req, res) => {
         console.error('Registration error:', error);
         res.status(500).json({ error: 'Server error: ' + error.message });
     }
-});
-
-
-// User logout
-app.post('/api/logout', (req, res) => {
-    res.json({ success: true, message: 'Logged out successfully' });
-});
-
-// Get current user
-app.get('/api/user', requireAuth, (req, res) => {
-    try {
-        const user = users.find(u => u.id === req.userId);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        res.json({
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            phone: user.phone,
-            birthDate: user.birthDate,
-            street: user.street,
-            houseNumber: user.houseNumber,
-            apartment: user.apartment,
-            postalCode: user.postalCode,
-            city: user.city,
-            state: user.state,
-            country: user.country,
-            newsletter: user.newsletter
-        });
-    } catch (error) {
-        console.error('Get user error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Check authentication status
-app.get('/api/auth/status', (req, res) => {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (token) {
-        const userId = verifyToken(token);
-        if (userId) {
-            return res.json({ authenticated: true, userId });
-        }
-    }
-    res.json({ authenticated: false });
 });
 
 // Create order (simple bread order) - with flexible auth for Vercel
@@ -461,14 +286,13 @@ app.get('/api/orders', (req, res) => {
     }
 });
 
-// Admin endpoint to view database (without strict auth for now)
+// Admin endpoint to view database
 app.get('/api/admin/database', (req, res) => {
     try {
         console.log('Admin database request received');
         console.log('Users in database:', users.length);
         console.log('Orders in database:', orders.length);
         
-        // For now, allow access to anyone (we'll check client-side)
         res.json({
             success: true,
             users: users,
@@ -476,30 +300,6 @@ app.get('/api/admin/database', (req, res) => {
             totalUsers: users.length,
             totalOrders: orders.length
         });
-    } catch (error) {
-        console.error('Database view error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Alternative admin endpoint with proper auth
-app.get('/api/admin/database/secure', requireAuth, (req, res) => {
-    try {
-        const user = users.find(u => u.id === req.userId);
-        
-        // Check if user is admin
-        if (user && ((user.firstName === 'Azizollah' && user.lastName === 'Payandeh') || 
-                     (user.firstName === 'عزیزالله' && user.lastName === 'پاینده'))) {
-            res.json({
-                success: true,
-                users: users,
-                orders: orders,
-                totalUsers: users.length,
-                totalOrders: orders.length
-            });
-        } else {
-            res.status(403).json({ error: 'Access denied. Admin privileges required.' });
-        }
     } catch (error) {
         console.error('Database view error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -536,16 +336,5 @@ app.post('/api/admin/mark-delivered', (req, res) => {
     }
 });
 
-// Initialize data
-initializeData();
-
 // Export for Vercel
 module.exports = app;
-
-// Start server (only in development)
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 3001;
-    app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-    });
-}
