@@ -132,6 +132,9 @@
                 return;
             }
             
+            // Get user data from localStorage
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
             fetch('/api/orders', {
                 method: 'POST',
                 headers: {
@@ -140,7 +143,9 @@
                 },
                 body: JSON.stringify({
                     quantity: currentQuantity,
-                    totalPrice: totalPrice
+                    totalPrice: totalPrice,
+                    userId: user.id,
+                    userData: user
                 })
             })
             .then(response => response.json())

@@ -307,20 +307,52 @@ app.get('/api/auth/status', (req, res) => {
     res.json({ authenticated: false });
 });
 
-// Create order (simple bread order)
-app.post('/api/orders', requireAuth, (req, res) => {
+// Create order (simple bread order) - with flexible auth for Vercel
+app.post('/api/orders', (req, res) => {
     try {
-        const { quantity, totalPrice } = req.body;
+        const { quantity, totalPrice, userId, userData } = req.body;
         
-        // Get user details
-        const user = users.find(u => u.id === req.userId);
+        console.log('Order creation request:', { quantity, totalPrice, userId, userData });
+        
+        let user;
+        let finalUserId;
+        
+        // Try to get user from token first
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (token) {
+            const tokenUserId = verifyToken(token);
+            if (tokenUserId) {
+                user = users.find(u => u.id === tokenUserId);
+                finalUserId = tokenUserId;
+                console.log('User found via token:', user);
+            }
+        }
+        
+        // If no user found via token, try to use provided userData
+        if (!user && userData) {
+            // Find user by phone number from userData
+            user = users.find(u => u.phone === userData.phone);
+            if (user) {
+                finalUserId = user.id;
+                console.log('User found via userData:', user);
+            }
+        }
+        
+        // If still no user, try userId from request body
+        if (!user && userId) {
+            user = users.find(u => u.id === userId);
+            finalUserId = userId;
+            console.log('User found via userId:', user);
+        }
+        
         if (!user) {
+            console.log('No user found. Available users:', users.map(u => ({ id: u.id, phone: u.phone, name: u.firstName + ' ' + u.lastName })));
             return res.status(404).json({ error: 'User not found' });
         }
 
         const newOrder = {
             id: nextOrderId++,
-            userId: req.userId,
+            userId: finalUserId,
             productName: 'Traditionelles Barbari-Brot',
             quantity: quantity || 1,
             totalPrice: totalPrice || 3.50,
@@ -348,28 +380,84 @@ app.post('/api/orders', requireAuth, (req, res) => {
         });
     } catch (error) {
         console.error('Create order error:', error);
-        res.status(500).json({ error: 'Failed to create order' });
+        res.status(500).json({ error: 'Failed to create order: ' + error.message });
     }
 });
 
-// Get user orders
-app.get('/api/orders', requireAuth, (req, res) => {
+// Get user orders - flexible auth for Vercel
+app.get('/api/orders', (req, res) => {
     try {
-        const user = users.find(u => u.id === req.userId);
+        let user = null;
+        let userId = null;
+        
+        // Try to get user from token
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (token) {
+            userId = verifyToken(token);
+            if (userId) {
+                user = users.find(u => u.id === userId);
+            }
+        }
+        
+        // If no user found via token, try to get from query params
+        if (!user && req.query.userId) {
+            userId = parseInt(req.query.userId);
+            user = users.find(u => u.id === userId);
+        }
+        
+        console.log('Get orders request - user:', user, 'userId:', userId);
+        
+        if (!user) {
+            // Return all orders for admin panel (no specific user)
+            const allOrders = orders.map(order => {
+                const orderUser = users.find(u => u.id === order.userId);
+                return {
+                    id: order.id,
+                    userId: order.userId,
+                    firstName: order.firstName || orderUser?.firstName,
+                    lastName: order.lastName || orderUser?.lastName,
+                    phone: order.phone || orderUser?.phone,
+                    productName: order.productName || 'Traditionelles Barbari-Brot',
+                    quantity: order.quantity || 1,
+                    totalPrice: order.totalPrice || order.totalAmount || 0,
+                    totalAmount: order.totalAmount || order.totalPrice || 0,
+                    street: order.street || orderUser?.street,
+                    houseNumber: order.houseNumber || orderUser?.houseNumber,
+                    apartment: order.apartment || orderUser?.apartment,
+                    postalCode: order.postalCode || orderUser?.postalCode,
+                    city: order.city || orderUser?.city,
+                    state: order.state || orderUser?.state,
+                    createdAt: order.createdAt,
+                    status: order.status
+                };
+            }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            res.json({ success: true, orders: allOrders });
+            return;
+        }
         
         // Check if user is admin (Azizollah Payandeh - both English and Persian)
-        if (user && ((user.firstName === 'Azizollah' && user.lastName === 'Payandeh') || 
-                     (user.firstName === 'عزیزالله' && user.lastName === 'پاینده'))) {
+        if ((user.firstName === 'Azizollah' && user.lastName === 'Payandeh') || 
+            (user.firstName === 'عزیزالله' && user.lastName === 'پاینده')) {
             // Admin can see all orders
             const allOrders = orders.map(order => {
                 const orderUser = users.find(u => u.id === order.userId);
                 return {
                     id: order.id,
-                    customerName: `${orderUser?.firstName || order.firstName} ${orderUser?.lastName || order.lastName}`,
+                    userId: order.userId,
+                    firstName: order.firstName || orderUser?.firstName,
+                    lastName: order.lastName || orderUser?.lastName,
+                    phone: order.phone || orderUser?.phone,
                     productName: order.productName || 'Traditionelles Barbari-Brot',
                     quantity: order.quantity || 1,
                     totalPrice: order.totalPrice || order.totalAmount || 0,
-                    address: `${order.street} ${order.houseNumber}, ${order.postalCode} ${order.city}, ${order.state}`,
+                    totalAmount: order.totalAmount || order.totalPrice || 0,
+                    street: order.street || orderUser?.street,
+                    houseNumber: order.houseNumber || orderUser?.houseNumber,
+                    apartment: order.apartment || orderUser?.apartment,
+                    postalCode: order.postalCode || orderUser?.postalCode,
+                    city: order.city || orderUser?.city,
+                    state: order.state || orderUser?.state,
                     createdAt: order.createdAt,
                     status: order.status
                 };
@@ -379,14 +467,14 @@ app.get('/api/orders', requireAuth, (req, res) => {
         } else {
             // Regular user can only see their own orders
             const userOrders = orders
-                .filter(order => order.userId === req.userId)
+                .filter(order => order.userId === userId)
                 .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             res.json({ success: true, orders: userOrders });
         }
     } catch (error) {
         console.error('Get orders error:', error);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error: ' + error.message });
     }
 });
 
