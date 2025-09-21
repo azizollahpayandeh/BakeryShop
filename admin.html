@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت - norbrot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Admin Panel Specific Styles */
+        .admin-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 0;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            color: white;
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .admin-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .admin-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #8B4513;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #8B4513;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .admin-tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem 2rem;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            color: white;
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            color: white;
+            padding: 0.8rem;
+            text-align: right;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .data-table td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+            text-align: right;
+            font-size: 0.85rem;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .order-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .user-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            border-color: #8B4513;
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.1);
+        }
+
+        .user-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #8B4513;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-info {
+            color: #666;
+            margin-bottom: 0.3rem;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .loading i {
+            font-size: 3rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 0 0.5rem;
+            }
+            
+            .admin-header h1 {
+                font-size: 2rem;
+            }
+            
+            .admin-tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                margin-bottom: 0.5rem;
+            }
+            
+            .data-table {
+                font-size: 0.9rem;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+        }
+
+        .deliver-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .deliver-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .deliver-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status-delivered {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-page">
+        <div class="admin-container">
+            <!-- Header -->
+            <div class="admin-header">
+                <h1><i class="fas fa-crown"></i> پنل مدیریت norbrot</h1>
+                <p>مدیریت کامل کاربران و سفارشات</p>
+            </div>
+
+            <!-- Back Button -->
+            <button class="back-btn" onclick="goBack()">
+                <i class="fas fa-arrow-right"></i> بازگشت به صفحه اصلی
+            </button>
+
+            <!-- Refresh Button -->
+            <button class="refresh-btn" onclick="loadAllData()">
+                <i class="fas fa-sync-alt"></i> به‌روزرسانی اطلاعات
+            </button>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">کل کاربران</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-number" id="totalOrders">0</div>
+                    <div class="stat-label">کل سفارشات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-euro-sign"></i>
+                    </div>
+                    <div class="stat-number" id="totalRevenue">0 €</div>
+                    <div class="stat-label">کل درآمد</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-bread-slice"></i>
+                    </div>
+                    <div class="stat-number" id="totalBreads">0</div>
+                    <div class="stat-label">کل نان فروخته شده</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="showTab('orders')">
+                    <i class="fas fa-shopping-cart"></i> سفارشات جدید
+                </button>
+                <button class="tab-btn" onclick="showTab('delivered')">
+                    <i class="fas fa-check-circle"></i> تحویل داده شده
+                </button>
+                <button class="tab-btn" onclick="showTab('users')">
+                    <i class="fas fa-users"></i> کاربران
+                </button>
+                <button class="tab-btn" onclick="showTab('analytics')">
+                    <i class="fas fa-chart-bar"></i> آمار و تحلیل
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Orders Tab -->
+                <div id="orders-tab" class="tab-panel active">
+                    <h2><i class="fas fa-shopping-cart"></i> سفارشات جدید</h2>
+                    <div id="orders-content">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>در حال بارگذاری سفارشات...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivered Orders Tab -->
+                <div id="delivered-tab" class="tab-panel">
+                    <h2><i class="fas fa-check-circle"></i> سفارشات تحویل داده شده</h2>
+                    <div id="delivered-content">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>در حال بارگذاری سفارشات تحویل داده شده...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Tab -->
+                <div id="users-tab" class="tab-panel">
+                    <h2><i class="fas fa-users"></i> مدیریت کاربران</h2>
+                    <div id="users-content">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>در حال بارگذاری کاربران...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="analytics-tab" class="tab-panel">
+                    <h2><i class="fas fa-chart-bar"></i> آمار و تحلیل</h2>
+                    <div id="analytics-content">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>در حال بارگذاری آمار...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allData = {};
+
+        // Check admin access
+        function checkAdminAccess() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!(user.firstName === 'Azizollah' && user.lastName === 'Payandeh') && 
+                !(user.firstName === 'عزیزالله' && user.lastName === 'پاینده')) {
+                alert('دسترسی غیرمجاز! فقط مدیران می‌توانند به این صفحه دسترسی داشته باشند.');
+                window.location.href = 'products.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Go back function
+        function goBack() {
+            window.location.href = 'products.html';
+        }
+
+        // Show tab function
+        function showTab(tabName) {
+            // Hide all tab panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab panel
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Load data for the selected tab
+            if (tabName === 'orders') {
+                displayOrders();
+            } else if (tabName === 'delivered') {
+                displayDeliveredOrders();
+            } else if (tabName === 'users') {
+                displayUsers();
+            } else if (tabName === 'analytics') {
+                displayAnalytics();
+            }
+        }
+
+        // Load all data
+        function loadAllData() {
+            const token = localStorage.getItem('authToken');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            console.log('Loading data for user:', user);
+            console.log('Token available:', token ? 'Yes' : 'No');
+            
+            if (!token) {
+                alert('لطفاً ابتدا وارد شوید');
+                return;
+            }
+
+            // Try multiple ways to send the token
+            fetch('/api/admin/database', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    allData = data;
+                    updateStats();
+                    displayOrders();
+                } else {
+                    alert('خطا در بارگذاری اطلاعات: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading data:', error);
+                alert('خطا در بارگذاری اطلاعات: ' + error.message);
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalUsers').textContent = allData.totalUsers || 0;
+            document.getElementById('totalOrders').textContent = allData.totalOrders || 0;
+            
+            const totalRevenue = allData.orders.reduce((sum, order) => sum + (order.totalPrice || order.totalAmount || 0), 0);
+            document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2) + ' €';
+            
+            const totalBreads = allData.orders.reduce((sum, order) => sum + (order.quantity || 1), 0);
+            document.getElementById('totalBreads').textContent = totalBreads;
+        }
+
+        // Display orders (new orders only)
+        function displayOrders() {
+            const content = document.getElementById('orders-content');
+            
+            if (!allData.orders || allData.orders.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">هیچ سفارش جدیدی موجود نیست</p>';
+                return;
+            }
+
+            // Filter new orders (not delivered) and sort by date (newest first)
+            const newOrders = allData.orders
+                .filter(order => order.status !== 'delivered')
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            if (newOrders.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">هیچ سفارش جدیدی موجود نیست</p>';
+                return;
+            }
+
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>شماره سفارش</th>
+                            <th>مشتری</th>
+                            <th>تلفن</th>
+                            <th>محصول</th>
+                            <th>تعداد</th>
+                            <th>قیمت کل</th>
+                            <th>آدرس</th>
+                            <th>تاریخ سفارش</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            newOrders.forEach(order => {
+                const orderDate = new Date(order.createdAt).toLocaleString('fa-IR');
+                const statusClass = order.status === 'confirmed' ? 'status-confirmed' : '';
+                
+                html += `
+                    <tr>
+                        <td><strong>#${order.id}</strong></td>
+                        <td>${order.firstName} ${order.lastName}</td>
+                        <td>${order.phone || 'نامشخص'}</td>
+                        <td>${order.productName || 'نان بربری'}</td>
+                        <td>${order.quantity || 1}</td>
+                        <td><strong>${(order.totalPrice || order.totalAmount || 0).toFixed(2)} €</strong></td>
+                        <td>${order.street} ${order.houseNumber}, ${order.postalCode} ${order.city}</td>
+                        <td>${orderDate}</td>
+                        <td><span class="order-status ${statusClass}">تأیید شده</span></td>
+                        <td>
+                            <button class="deliver-btn" onclick="markAsDelivered(${order.id})">
+                                <i class="fas fa-check"></i> تحویل داده شد
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        // Display delivered orders
+        function displayDeliveredOrders() {
+            const content = document.getElementById('delivered-content');
+            
+            if (!allData.orders || allData.orders.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">هیچ سفارش تحویل داده شده‌ای موجود نیست</p>';
+                return;
+            }
+
+            // Filter delivered orders and sort by date (newest first)
+            const deliveredOrders = allData.orders
+                .filter(order => order.status === 'delivered')
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            if (deliveredOrders.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">هیچ سفارش تحویل داده شده‌ای موجود نیست</p>';
+                return;
+            }
+
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>شماره سفارش</th>
+                            <th>مشتری</th>
+                            <th>تلفن</th>
+                            <th>محصول</th>
+                            <th>تعداد</th>
+                            <th>قیمت کل</th>
+                            <th>آدرس</th>
+                            <th>تاریخ سفارش</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            deliveredOrders.forEach(order => {
+                const orderDate = new Date(order.createdAt).toLocaleString('fa-IR');
+                
+                html += `
+                    <tr>
+                        <td><strong>#${order.id}</strong></td>
+                        <td>${order.firstName} ${order.lastName}</td>
+                        <td>${order.phone || 'نامشخص'}</td>
+                        <td>${order.productName || 'نان بربری'}</td>
+                        <td>${order.quantity || 1}</td>
+                        <td><strong>${(order.totalPrice || order.totalAmount || 0).toFixed(2)} €</strong></td>
+                        <td>${order.street} ${order.houseNumber}, ${order.postalCode} ${order.city}</td>
+                        <td>${orderDate}</td>
+                        <td><span class="order-status status-delivered">تحویل داده شده</span></td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        // Display users
+        function displayUsers() {
+            const content = document.getElementById('users-content');
+            
+            if (!allData.users || allData.users.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">هیچ کاربری موجود نیست</p>';
+                return;
+            }
+
+            let html = '';
+            allData.users.forEach(user => {
+                const userOrders = allData.orders.filter(order => order.userId === user.id);
+                const totalSpent = userOrders.reduce((sum, order) => sum + (order.totalPrice || order.totalAmount || 0), 0);
+                
+                html += `
+                    <div class="user-card">
+                        <div class="user-name">
+                            <i class="fas fa-user"></i> ${user.firstName} ${user.lastName}
+                        </div>
+                        <div class="user-info">
+                            <i class="fas fa-phone"></i> تلفن: ${user.phone}
+                        </div>
+                        <div class="user-info">
+                            <i class="fas fa-map-marker-alt"></i> آدرس: ${user.street} ${user.houseNumber}, ${user.postalCode} ${user.city}, ${user.state}
+                        </div>
+                        <div class="user-info">
+                            <i class="fas fa-shopping-cart"></i> تعداد سفارشات: ${userOrders.length}
+                        </div>
+                        <div class="user-info">
+                            <i class="fas fa-euro-sign"></i> مجموع خرید: ${totalSpent.toFixed(2)} €
+                        </div>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
+        }
+
+        // Display analytics
+        function displayAnalytics() {
+            const content = document.getElementById('analytics-content');
+            
+            if (!allData.orders || allData.orders.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">داده‌ای برای تحلیل موجود نیست</p>';
+                return;
+            }
+
+            // Calculate analytics
+            const totalRevenue = allData.orders.reduce((sum, order) => sum + (order.totalPrice || order.totalAmount || 0), 0);
+            const averageOrderValue = totalRevenue / allData.orders.length;
+            const totalBreads = allData.orders.reduce((sum, order) => sum + (order.quantity || 1), 0);
+            
+            // Most active users
+            const userOrderCounts = {};
+            allData.orders.forEach(order => {
+                const userId = order.userId;
+                userOrderCounts[userId] = (userOrderCounts[userId] || 0) + 1;
+            });
+            
+            const mostActiveUser = Object.keys(userOrderCounts).reduce((a, b) => 
+                userOrderCounts[a] > userOrderCounts[b] ? a : b
+            );
+            
+            const mostActiveUserData = allData.users.find(u => u.id == mostActiveUser);
+
+            let html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div style="background: #f8f9fa; padding: 2rem; border-radius: 15px; border: 2px solid #8B4513;">
+                        <h3 style="color: #8B4513; margin-bottom: 1rem;"><i class="fas fa-chart-line"></i> آمار کلی</h3>
+                        <p><strong>متوسط ارزش هر سفارش:</strong> ${averageOrderValue.toFixed(2)} €</p>
+                        <p><strong>کل نان فروخته شده:</strong> ${totalBreads} عدد</p>
+                        <p><strong>متوسط نان در هر سفارش:</strong> ${(totalBreads / allData.orders.length).toFixed(1)} عدد</p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 2rem; border-radius: 15px; border: 2px solid #8B4513;">
+                        <h3 style="color: #8B4513; margin-bottom: 1rem;"><i class="fas fa-star"></i> بهترین مشتری</h3>
+                        ${mostActiveUserData ? `
+                            <p><strong>نام:</strong> ${mostActiveUserData.firstName} ${mostActiveUserData.lastName}</p>
+                            <p><strong>تعداد سفارشات:</strong> ${userOrderCounts[mostActiveUser]} سفارش</p>
+                            <p><strong>تلفن:</strong> ${mostActiveUserData.phone}</p>
+                        ` : '<p>اطلاعاتی موجود نیست</p>'}
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 2rem; border-radius: 15px; border: 2px solid #8B4513;">
+                        <h3 style="color: #8B4513; margin-bottom: 1rem;"><i class="fas fa-calendar"></i> آمار زمانی</h3>
+                        <p><strong>تاریخ آخرین سفارش:</strong> ${new Date(Math.max(...allData.orders.map(o => new Date(o.createdAt)))).toLocaleString('fa-IR')}</p>
+                        <p><strong>تاریخ اولین سفارش:</strong> ${new Date(Math.min(...allData.orders.map(o => new Date(o.createdAt)))).toLocaleString('fa-IR')}</p>
+                    </div>
+                </div>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        // Mark order as delivered
+        function markAsDelivered(orderId) {
+            if (!confirm('آیا مطمئن هستید که این سفارش تحویل داده شده است؟')) {
+                return;
+            }
+
+            const token = localStorage.getItem('authToken');
+            
+            fetch('/api/admin/mark-delivered', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ orderId: orderId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('سفارش با موفقیت به عنوان تحویل داده شده علامت‌گذاری شد!');
+                    loadAllData(); // Refresh all data
+                } else {
+                    alert('خطا در به‌روزرسانی سفارش: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error marking order as delivered:', error);
+                alert('خطا در به‌روزرسانی سفارش');
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAdminAccess()) {
+                loadAllData();
+            }
+        });
+    </script>
+</body>
+</html>

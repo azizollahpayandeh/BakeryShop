@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Products - Artisan Bakery</title>
+    <title>Barbari-Brot - norbrot</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -14,189 +14,178 @@
         <div class="nav-container">
             <div class="nav-logo">
                 <i class="fas fa-bread-slice"></i>
-                <span>Artisan Bakery</span>
+                <span>norbrot</span>
             </div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="index.html" class="nav-link">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a href="auth.html" class="nav-link" id="authLink">Login</a>
-                </li>
-                <li class="nav-item">
-                    <a href="profile.html" class="nav-link" id="profileLink" style="display: none;">Profile</a>
-                </li>
-                <li class="nav-item">
-                    <a href="about.html" class="nav-link">About Us</a>
-                </li>
-                <li class="nav-item">
-                    <a href="products.html" class="nav-link active">Products</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" id="logoutBtn" style="display: none;" onclick="logout()">Logout</a>
-                </li>
-            </ul>
-            <div class="hamburger">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
+            <div class="nav-right">
+                <div class="language-switcher">
+                    <button class="lang-btn active" data-lang="de">Deutsch</button>
+                    <button class="lang-btn" data-lang="en">English</button>
+                    <button class="lang-btn" data-lang="tr">Türkçe</button>
+                    <button class="lang-btn" data-lang="fa">فارسی</button>
+                </div>
+                <a href="admin.html" class="nav-link admin-link" id="adminPanelBtn" style="display: none;">
+                    <i class="fas fa-crown"></i>
+                    <span>پنل مدیریت</span>
+                </a>
+                <a href="#" class="nav-link" id="logoutBtn" onclick="logout()">Abmelden</a>
             </div>
         </div>
     </nav>
 
-    <!-- Products Page -->
-    <section class="products-page">
+    <!-- Product Page -->
+    <section class="product-page elderly-friendly">
         <div class="container">
-            <h2>Our Artisan Bread Collection</h2>
-            <p style="text-align: center; font-size: 1.2rem; color: #666; margin-bottom: 3rem;">Handcrafted daily with traditional methods and the finest ingredients</p>
+            <h2 class="page-title">Frisches Barbari-Brot</h2>
             
-            <!-- Lavash Bread -->
-            <div class="product-item">
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1549931319-a545dcf3bc73?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Lavash Bread">
+            <!-- Barbari Bread Product -->
+            <div class="product-item elderly-product simple-product">
+                <div class="product-image-container">
+                    <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Barbari-Brot" class="product-image-large">
                 </div>
                 <div class="product-details">
-                    <h3>Traditional Lavash</h3>
-                    <p>Our signature Lavash bread is made using ancient Armenian techniques. This thin, soft flatbread is perfect for wraps, sandwiches, and as a side to your meals. Baked to perfection with a delicate texture that melts in your mouth.</p>
-                    <div class="product-features">
-                        <span class="feature-tag">Vegan</span>
-                        <span class="feature-tag">Traditional Recipe</span>
-                        <span class="feature-tag">Soft Texture</span>
+                    <div class="product-price-large">Preis: 3,50 €</div>
+                    
+                    <!-- Quantity Selection -->
+                    <div class="quantity-section-large">
+                        <label for="quantity" class="quantity-label-large">Anzahl:</label>
+                        <div class="quantity-controls-large">
+                            <button type="button" class="quantity-btn-large" onclick="decreaseQuantity()">-</button>
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="10" readonly class="quantity-input-large">
+                            <button type="button" class="quantity-btn-large" onclick="increaseQuantity()">+</button>
+                        </div>
                     </div>
-                    <div class="product-price">€2.50</div>
-                    <button class="order-btn" onclick="addToCart('Traditional Lavash', '€2.50')">Order Now</button>
-                </div>
-            </div>
-
-            <!-- Turkish Bread -->
-            <div class="product-item">
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Turkish Bread">
-                </div>
-                <div class="product-details">
-                    <h3>Turkish Pide</h3>
-                    <p>Authentic Turkish pide bread with a golden crust and soft interior. This traditional bread is perfect for breakfast, lunch, or dinner. Made with premium flour and baked in our stone oven for that authentic taste.</p>
-                    <div class="product-features">
-                        <span class="feature-tag">Authentic Recipe</span>
-                        <span class="feature-tag">Golden Crust</span>
-                        <span class="feature-tag">Stone Oven Baked</span>
+                    
+                    <!-- Live Total Display -->
+                    <div class="total-display-large">
+                        <span class="total-label">Gesamt:</span>
+                        <span class="total-amount" id="totalAmount">3,50 €</span>
                     </div>
-                    <div class="product-price">€3.20</div>
-                    <button class="order-btn" onclick="addToCart('Turkish Pide', '€3.20')">Order Now</button>
+                    
+                    <!-- Order Button -->
+                    <button class="order-btn-large" onclick="placeOrder()">
+                        <i class="fas fa-check-circle"></i>
+                        Bestellung bestätigen
+                    </button>
                 </div>
-            </div>
-
-            <!-- Afghan Bread -->
-            <div class="product-item">
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1586444248902-2f64eddc13df?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Afghan Bread">
-                </div>
-                <div class="product-details">
-                    <h3>Afghan Naan</h3>
-                    <p>Traditional Afghan naan bread baked in our authentic tandoor oven. This bread features a crispy exterior and soft, fluffy interior. Perfect for dipping in sauces or enjoying with your favorite dishes.</p>
-                    <div class="product-features">
-                        <span class="feature-tag">Tandoor Baked</span>
-                        <span class="feature-tag">Crispy Exterior</span>
-                        <span class="feature-tag">Fluffy Interior</span>
-                    </div>
-                    <div class="product-price">€2.80</div>
-                    <button class="order-btn" onclick="addToCart('Afghan Naan', '€2.80')">Order Now</button>
-                </div>
-            </div>
-
-            <!-- Barbari Bread -->
-            <div class="product-item">
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Barbari Bread">
-                </div>
-                <div class="product-details">
-                    <h3>Persian Barbari</h3>
-                    <p>Authentic Persian Barbari bread with sesame seeds and a distinctive crispy crust. This traditional bread is a staple in Persian cuisine and perfect for breakfast or as an accompaniment to any meal.</p>
-                    <div class="product-features">
-                        <span class="feature-tag">Sesame Seeds</span>
-                        <span class="feature-tag">Crispy Crust</span>
-                        <span class="feature-tag">Persian Recipe</span>
-                    </div>
-                    <div class="product-price">€3.50</div>
-                    <button class="order-btn" onclick="addToCart('Persian Barbari', '€3.50')">Order Now</button>
-                </div>
-            </div>
-
-            <!-- Sourdough Bread -->
-            <div class="product-item">
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Sourdough Bread">
-                </div>
-                <div class="product-details">
-                    <h3>Artisan Sourdough</h3>
-                    <p>Our signature sourdough bread is made with a 50-year-old starter culture. This bread has a tangy flavor and chewy texture that pairs perfectly with butter, cheese, or your favorite spreads.</p>
-                    <div class="product-features">
-                        <span class="feature-tag">50-Year Starter</span>
-                        <span class="feature-tag">Tangy Flavor</span>
-                        <span class="feature-tag">Chewy Texture</span>
-                    </div>
-                    <div class="product-price">€4.20</div>
-                    <button class="order-btn" onclick="addToCart('Artisan Sourdough', '€4.20')">Order Now</button>
-                </div>
-            </div>
-
-            <!-- Whole Wheat Bread -->
-            <div class="product-item">
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Whole Wheat Bread">
-                </div>
-                <div class="product-details">
-                    <h3>Whole Wheat Loaf</h3>
-                    <p>Nutritious whole wheat bread made with organic whole wheat flour. This hearty bread is perfect for those who prefer a healthier option without compromising on taste and texture.</p>
-                    <div class="product-features">
-                        <span class="feature-tag">Organic Flour</span>
-                        <span class="feature-tag">Nutritious</span>
-                        <span class="feature-tag">Hearty</span>
-                    </div>
-                    <div class="product-price">€3.80</div>
-                    <button class="order-btn" onclick="addToCart('Whole Wheat Loaf', '€3.80')">Order Now</button>
-                </div>
-            </div>
-
-            <!-- Checkout Button -->
-            <div style="text-align: center; margin-top: 3rem;">
-                <button class="btn btn-primary" onclick="proceedToCheckout()" style="font-size: 1.2rem; padding: 15px 40px;">
-                    <i class="fas fa-shopping-cart"></i> Proceed to Checkout
-                </button>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Artisan Bakery</h3>
-                    <p>Bringing you the finest artisan breads with traditional recipes and modern convenience.</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="products.html">Products</a></li>
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="login.html">Login</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Contact Info</h4>
-                    <p><i class="fas fa-phone"></i> +49 123 456 7890</p>
-                    <p><i class="fas fa-envelope"></i> info@artisanbakery.de</p>
-                    <p><i class="fas fa-map-marker-alt"></i> Berlin, Germany</p>
-                </div>
+    <!-- Order Confirmation Modal -->
+    <div id="orderModal" class="modal" style="display: none;">
+        <div class="modal-content success-modal">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2024 Artisan Bakery. All rights reserved.</p>
-            </div>
+            <h3 class="success-title">Bestellung bestätigt!</h3>
+            <div id="orderDetails" class="order-details"></div>
+            <p class="payment-info">Die Zahlung erfolgt bar bei der Lieferung.</p>
+            <button class="btn btn-success" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+                Schließen
+            </button>
         </div>
-    </footer>
+    </div>
 
+
+    <script src="languages.js"></script>
     <script src="script.js"></script>
+    <script>
+        let currentQuantity = 1;
+        const breadPrice = 3.50;
+
+        function increaseQuantity() {
+            if (currentQuantity < 10) {
+                currentQuantity++;
+                document.getElementById('quantity').value = currentQuantity;
+                updateTotal();
+            }
+        }
+
+        function decreaseQuantity() {
+            if (currentQuantity > 1) {
+                currentQuantity--;
+                document.getElementById('quantity').value = currentQuantity;
+                updateTotal();
+            }
+        }
+
+        function updateTotal() {
+            const totalPrice = currentQuantity * breadPrice;
+            const totalAmount = document.getElementById('totalAmount');
+            if (totalAmount) {
+                totalAmount.textContent = totalPrice.toFixed(2).replace('.', ',') + ' €';
+            }
+        }
+
+        function placeOrder() {
+            const totalPrice = currentQuantity * breadPrice;
+            
+            // Get current language
+            const currentLang = localStorage.getItem('selectedLanguage') || 'de';
+            const t = translations[currentLang] || translations.de;
+            
+            // Create order on server
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                alert('Please login first');
+                return;
+            }
+            
+            fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    quantity: currentQuantity,
+                    totalPrice: totalPrice
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const orderDetails = `
+                        <div class="order-item">
+                            <span><strong>${t.product}:</strong> Traditionelles Barbari-Brot</span>
+                        </div>
+                        <div class="order-item">
+                            <span><strong>${t.quantity}:</strong> ${currentQuantity} ${t.pieces}</span>
+                        </div>
+                        <div class="order-item">
+                            <span><strong>${t.unitPrice}:</strong> ${breadPrice.toFixed(2)} €</span>
+                        </div>
+                        <div class="order-item total-item">
+                            <span><strong>${t.totalPrice}:</strong> ${totalPrice.toFixed(2)} €</span>
+                        </div>
+                    `;
+                    
+                    document.getElementById('orderDetails').innerHTML = orderDetails;
+                    document.getElementById('orderModal').style.display = 'block';
+                } else {
+                    alert('Failed to create order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Order creation error:', error);
+                alert('Failed to create order. Please try again.');
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const orderModal = document.getElementById('orderModal');
+            
+            if (event.target === orderModal) {
+                orderModal.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>

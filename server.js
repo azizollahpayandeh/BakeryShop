@@ -69,10 +69,7 @@ function generateToken(userId) {
 function verifyToken(token) {
     try {
         const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-        // Check if token is not older than 24 hours
-        if (Date.now() - decoded.timestamp > 24 * 60 * 60 * 1000) {
-            return null;
-        }
+        // Token never expires - permanent session
         return decoded.userId;
     } catch (error) {
         return null;
@@ -81,14 +78,21 @@ function verifyToken(token) {
 
 // Authentication middleware
 function requireAuth(req, res, next) {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    const token = req.headers.authorization?.replace('Bearer ', '') || 
+                  req.body.token || 
+                  req.query.token;
+    
+    console.log('Auth token received:', token ? 'Yes' : 'No');
+    
     if (token) {
         const userId = verifyToken(token);
+        console.log('Token verified, userId:', userId);
         if (userId) {
             req.userId = userId;
             return next();
         }
     }
+    console.log('Authentication failed');
     res.status(401).json({ error: 'Authentication required' });
 }
 
@@ -105,31 +109,19 @@ function initializeData() {
 
 // Serve HTML files
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/index.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
 app.get('/auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
-app.get('/profile.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'profile.html'));
-});
-
-app.get('/about.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'about.html'));
-});
-
 app.get('/products.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'products.html'));
 });
 
-app.get('/product-payment.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'product-payment.html'));
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // Serve CSS and JS files with proper headers
@@ -143,6 +135,12 @@ app.get('/script.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.setHeader('Cache-Control', 'public, max-age=31536000');
     res.sendFile(path.join(__dirname, 'script.js'));
+});
+
+app.get('/languages.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.sendFile(path.join(__dirname, 'languages.js'));
 });
 
 // Handle all static files
@@ -197,106 +195,70 @@ app.get('*.ico', (req, res) => {
 // User registration
 app.post('/api/register', async (req, res) => {
     try {
+        console.log('Registration request received:', req.body);
+        
         const {
-            firstName, lastName, email, phone, birthDate, password, confirmPassword,
-            street, houseNumber, apartment, postalCode, city, state, newsletter
+            firstName, lastName, phone,
+            street, houseNumber, apartment, postalCode, city, state
         } = req.body;
 
-        // Validation
-        if (password !== confirmPassword) {
-            return res.status(400).json({ error: 'Passwords do not match' });
+        // Basic validation
+        if (!firstName || !lastName || !phone || !street || !houseNumber || !postalCode || !city || !state) {
+            return res.status(400).json({ error: 'All required fields must be provided' });
         }
 
-        if (password.length < 6) {
-            return res.status(400).json({ error: 'Password must be at least 6 characters' });
-        }
-
-        // Check if user already exists
-        const existingUser = users.find(user => user.email === email);
+        // Check if user already exists by phone
+        const existingUser = users.find(user => user.phone === phone);
         if (existingUser) {
-            return res.status(400).json({ error: 'User already exists with this email' });
+            return res.status(400).json({ error: 'User already exists with this phone number' });
         }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create user
         const newUser = {
             id: nextUserId++,
-            firstName,
-            lastName,
-            email,
-            phone,
-            birthDate,
-            password: hashedPassword,
-            street,
-            houseNumber,
-            apartment,
-            postalCode,
-            city,
-            state,
-            country: 'Germany',
-            newsletter: newsletter ? 1 : 0,
+            firstName: firstName || '',
+            lastName: lastName || '',
+            phone: phone || '',
+            street: street || '',
+            houseNumber: houseNumber || '',
+            apartment: apartment || '',
+            postalCode: postalCode || '',
+            city: city || '',
+            state: state || '',
+            country: 'Deutschland',
             createdAt: new Date().toISOString()
         };
 
         users.push(newUser);
+        console.log('User created successfully:', newUser.id);
+
+        // Generate permanent token (never expires)
+        const token = generateToken(newUser.id);
 
         res.json({ 
             success: true, 
             message: 'User registered successfully',
-            userId: newUser.id 
-        });
-    } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// User login
-app.post('/api/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        const user = users.find(u => u.email === email);
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
-
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
-
-        // Generate token
-        const token = generateToken(user.id);
-
-        res.json({ 
-            success: true, 
-            message: 'Login successful',
             token,
             user: {
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                phone: user.phone,
-                birthDate: user.birthDate,
-                street: user.street,
-                houseNumber: user.houseNumber,
-                apartment: user.apartment,
-                postalCode: user.postalCode,
-                city: user.city,
-                state: user.state,
-                country: user.country,
-                newsletter: user.newsletter
+                id: newUser.id,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                phone: newUser.phone,
+                street: newUser.street,
+                houseNumber: newUser.houseNumber,
+                apartment: newUser.apartment,
+                postalCode: newUser.postalCode,
+                city: newUser.city,
+                state: newUser.state,
+                country: newUser.country
             }
         });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Server error: ' + error.message });
     }
 });
+
 
 // User logout
 app.post('/api/logout', (req, res) => {
@@ -345,39 +307,39 @@ app.get('/api/auth/status', (req, res) => {
     res.json({ authenticated: false });
 });
 
-// Create order
+// Create order (simple bread order)
 app.post('/api/orders', requireAuth, (req, res) => {
     try {
-        const {
-            items, totalAmount, firstName, lastName, email, phone,
-            street, houseNumber, apartment, postalCode, city, state,
-            deliveryDate, deliveryTime, specialInstructions, paymentMethod
-        } = req.body;
+        const { quantity, totalPrice } = req.body;
+        
+        // Get user details
+        const user = users.find(u => u.id === req.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
         const newOrder = {
             id: nextOrderId++,
             userId: req.userId,
-            items: JSON.stringify(items),
-            totalAmount,
-            firstName,
-            lastName,
-            email,
-            phone,
-            street,
-            houseNumber,
-            apartment,
-            postalCode,
-            city,
-            state,
-            deliveryDate,
-            deliveryTime,
-            specialInstructions,
-            paymentMethod,
-            status: 'pending',
+            productName: 'Traditionelles Barbari-Brot',
+            quantity: quantity || 1,
+            totalPrice: totalPrice || 3.50,
+            totalAmount: totalPrice || 3.50,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            phone: user.phone,
+            street: user.street,
+            houseNumber: user.houseNumber,
+            apartment: user.apartment,
+            postalCode: user.postalCode,
+            city: user.city,
+            state: user.state,
+            status: 'confirmed',
             createdAt: new Date().toISOString()
         };
 
         orders.push(newOrder);
+        console.log('Order created successfully:', newOrder.id);
 
         res.json({ 
             success: true, 
@@ -393,13 +355,112 @@ app.post('/api/orders', requireAuth, (req, res) => {
 // Get user orders
 app.get('/api/orders', requireAuth, (req, res) => {
     try {
-        const userOrders = orders
-            .filter(order => order.userId === req.userId)
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const user = users.find(u => u.id === req.userId);
+        
+        // Check if user is admin (Azizollah Payandeh - both English and Persian)
+        if (user && ((user.firstName === 'Azizollah' && user.lastName === 'Payandeh') || 
+                     (user.firstName === 'عزیزالله' && user.lastName === 'پاینده'))) {
+            // Admin can see all orders
+            const allOrders = orders.map(order => {
+                const orderUser = users.find(u => u.id === order.userId);
+                return {
+                    id: order.id,
+                    customerName: `${orderUser?.firstName || order.firstName} ${orderUser?.lastName || order.lastName}`,
+                    productName: order.productName || 'Traditionelles Barbari-Brot',
+                    quantity: order.quantity || 1,
+                    totalPrice: order.totalPrice || order.totalAmount || 0,
+                    address: `${order.street} ${order.houseNumber}, ${order.postalCode} ${order.city}, ${order.state}`,
+                    createdAt: order.createdAt,
+                    status: order.status
+                };
+            }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            res.json({ success: true, orders: allOrders });
+        } else {
+            // Regular user can only see their own orders
+            const userOrders = orders
+                .filter(order => order.userId === req.userId)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        res.json(userOrders);
+            res.json({ success: true, orders: userOrders });
+        }
     } catch (error) {
         console.error('Get orders error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Admin endpoint to view database (without strict auth for now)
+app.get('/api/admin/database', (req, res) => {
+    try {
+        console.log('Admin database request received');
+        console.log('Users in database:', users.length);
+        console.log('Orders in database:', orders.length);
+        
+        // For now, allow access to anyone (we'll check client-side)
+        res.json({
+            success: true,
+            users: users,
+            orders: orders,
+            totalUsers: users.length,
+            totalOrders: orders.length
+        });
+    } catch (error) {
+        console.error('Database view error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Alternative admin endpoint with proper auth
+app.get('/api/admin/database/secure', requireAuth, (req, res) => {
+    try {
+        const user = users.find(u => u.id === req.userId);
+        
+        // Check if user is admin
+        if (user && ((user.firstName === 'Azizollah' && user.lastName === 'Payandeh') || 
+                     (user.firstName === 'عزیزالله' && user.lastName === 'پاینده'))) {
+            res.json({
+                success: true,
+                users: users,
+                orders: orders,
+                totalUsers: users.length,
+                totalOrders: orders.length
+            });
+        } else {
+            res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+        }
+    } catch (error) {
+        console.error('Database view error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Mark order as delivered
+app.post('/api/admin/mark-delivered', (req, res) => {
+    try {
+        const { orderId } = req.body;
+        
+        console.log('Marking order as delivered:', orderId);
+        
+        // Find the order
+        const orderIndex = orders.findIndex(order => order.id === parseInt(orderId));
+        
+        if (orderIndex === -1) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        
+        // Update order status
+        orders[orderIndex].status = 'delivered';
+        orders[orderIndex].deliveredAt = new Date().toISOString();
+        
+        console.log('Order marked as delivered successfully:', orderId);
+        
+        res.json({ 
+            success: true, 
+            message: 'Order marked as delivered successfully' 
+        });
+    } catch (error) {
+        console.error('Mark delivered error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });

@@ -180,34 +180,79 @@ function proceedToCheckout() {
     window.location.href = 'payment.html';
 }
 
+// Check admin status function
+function checkAdminStatus() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
+    
+    console.log('Checking admin status for user:', user);
+    
+    // Check for both English and Persian versions of the name
+    if ((user.firstName === 'Azizollah' && user.lastName === 'Payandeh') || 
+        (user.firstName === 'عزیزالله' && user.lastName === 'پاینده')) {
+        if (adminPanelBtn) {
+            adminPanelBtn.style.display = 'block';
+            console.log('Admin panel button shown');
+        }
+    } else {
+        if (adminPanelBtn) {
+            adminPanelBtn.style.display = 'none';
+            console.log('Admin panel button hidden');
+        }
+    }
+}
+
 // Logout function
 function logout() {
-    fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('Logged out successfully');
-            // Update navigation
-            checkAuthStatus();
-            // Redirect to home page
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1000);
-        }
-    })
-    .catch(error => {
-        console.error('Error logging out:', error);
-        showNotification('Error logging out');
-    });
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    showNotification('Erfolgreich abgemeldet');
+    setTimeout(() => {
+        window.location.href = 'auth.html';
+    }, 1000);
 }
+
+// Language Switcher - now uses the real function from languages.js
 
 // Initialize page-specific functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is already logged in (permanent session)
+    const token = localStorage.getItem('authToken');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+        // User is already logged in, redirect to products page
+        if (window.location.pathname.includes('auth.html') || window.location.pathname === '/') {
+            window.location.href = 'products.html';
+        }
+    } else {
+        // User is not logged in, redirect to auth page
+        if (window.location.pathname.includes('products.html')) {
+            window.location.href = 'auth.html';
+        }
+    }
+    
     // Check authentication status on page load
     checkAuthStatus();
+    
+    // Initialize language switcher
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const lang = this.getAttribute('data-lang');
+            switchLanguage(lang);
+        });
+    });
+    
+    // Load saved language on page load - wait for DOM to be ready
+    setTimeout(() => {
+        const savedLanguage = localStorage.getItem('selectedLanguage') || 'de';
+        if (typeof switchLanguage === 'function') {
+            switchLanguage(savedLanguage);
+        }
+        
+        // Check if user is admin and show admin panel button
+        checkAdminStatus();
+    }, 100);
     // Add order buttons functionality on products page
     const orderButtons = document.querySelectorAll('.order-btn');
     orderButtons.forEach(button => {
@@ -226,9 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             if (validateForm(this)) {
-                if (this.id === 'loginForm') {
-                    handleLogin(this);
-                } else if (this.id === 'registerForm') {
+                if (this.id === 'registerForm') {
                     handleRegister(this);
                 } else if (this.id === 'checkoutForm') {
                     handleCheckout(this);
@@ -274,39 +317,6 @@ function loadCheckoutData() {
     }
 }
 
-// Handle login
-function handleLogin(form) {
-    const formData = new FormData(form);
-    const loginData = {
-        email: formData.get('email'),
-        password: formData.get('password')
-    };
-
-    fetch('/api/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(loginData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('Login successful!');
-            form.reset();
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1500);
-        } else {
-            showNotification(data.error || 'Login failed');
-        }
-    })
-    .catch(error => {
-        console.error('Login error:', error);
-        showNotification('Login failed. Please try again.');
-    });
-}
 
 // Handle registration
 function handleRegister(form) {
@@ -314,19 +324,16 @@ function handleRegister(form) {
     const registerData = {
         firstName: formData.get('firstName'),
         lastName: formData.get('lastName'),
-        email: formData.get('email'),
         phone: formData.get('phone'),
-        birthDate: formData.get('birthDate'),
-        password: formData.get('password'),
-        confirmPassword: formData.get('confirmPassword'),
         street: formData.get('street'),
         houseNumber: formData.get('houseNumber'),
         apartment: formData.get('apartment'),
         postalCode: formData.get('postalCode'),
         city: formData.get('city'),
-        state: formData.get('state'),
-        newsletter: formData.get('newsletter') === 'on'
+        state: formData.get('state')
     };
+
+    console.log('Sending registration data:', registerData);
 
     fetch('/api/register', {
         method: 'POST',
@@ -336,13 +343,22 @@ function handleRegister(form) {
         credentials: 'include',
         body: JSON.stringify(registerData)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Registration response:', data);
         if (data.success) {
-            showNotification('Registration successful! Please login.');
+            showNotification('Registrierung erfolgreich! Sie werden angemeldet...');
+            localStorage.setItem('authToken', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
             form.reset();
             setTimeout(() => {
-                window.location.href = 'login.html';
+                window.location.href = 'products.html';
             }, 1500);
         } else {
             showNotification(data.error || 'Registration failed');
@@ -350,7 +366,7 @@ function handleRegister(form) {
     })
     .catch(error => {
         console.error('Registration error:', error);
-        showNotification('Registration failed. Please try again.');
+        showNotification('Registration failed. Please try again. Error: ' + error.message);
     });
 }
 
